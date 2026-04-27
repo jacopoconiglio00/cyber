@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SECUREX — Threat Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --void:#020510;--deep:#050d1a;
+  --glass:rgba(10,25,60,0.45);--glass2:rgba(15,35,80,0.3);
+  --neon:#00d4ff;--neon2:#0099ff;
+  --neon-glow:rgba(0,212,255,0.15);--neon-glow2:rgba(0,212,255,0.05);
+  --electric:#4d9fff;--plasma:#00ffcc;
+  --red:#ff2d55;--orange:#ff6b00;--yellow:#ffd60a;--green:#00ff88;
+  --text:#e8f4ff;--text2:#7eb8d4;--text3:#3a6b85;
+  --border:rgba(0,212,255,0.12);--border2:rgba(0,212,255,0.25);
+  --mono:'Share Tech Mono',monospace;
+  --display:'Orbitron',sans-serif;
+  --body:'Exo 2',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--void);color:var(--text);font-family:var(--body);font-size:14px;min-height:100vh;overflow-x:hidden}
+.bg-layer{position:fixed;inset:0;z-index:0;pointer-events:none}
+.bg-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);background-size:50px 50px;animation:gridDrift 20s linear infinite}
+@keyframes gridDrift{0%{background-position:0 0}100%{background-position:50px 50px}}
+.bg-radial{position:absolute;inset:0;background:radial-gradient(ellipse 60% 40% at 20% 20%,rgba(0,100,255,0.08) 0%,transparent 70%),radial-gradient(ellipse 40% 60% at 80% 80%,rgba(0,212,255,0.06) 0%,transparent 70%)}
+.bg-scan{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.07) 3px,rgba(0,0,0,0.07) 4px)}
+.particle{position:absolute;width:2px;height:2px;border-radius:50%;background:var(--neon);animation:floatP var(--dur,8s) var(--delay,0s) infinite linear}
+@keyframes floatP{0%{transform:translateY(100vh) translateX(0);opacity:0}10%{opacity:.5}90%{opacity:.5}100%{transform:translateY(-10vh) translateX(var(--drift,20px));opacity:0}}
+.app{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;padding:0 28px;height:60px;background:rgba(2,5,16,0.88);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);box-shadow:0 1px 0 rgba(0,212,255,0.05)}
+.nav-logo{font-family:var(--display);font-size:20px;font-weight:900;letter-spacing:4px;color:var(--text);text-decoration:none;margin-right:48px;position:relative}
+.nav-logo::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--neon),transparent)}
+.nav-logo span{color:var(--neon);text-shadow:0 0 20px var(--neon)}
+.nav-items{display:flex;gap:4px;flex:1}
+.nav-item{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);text-decoration:none;padding:6px 16px;border-radius:3px;border:1px solid transparent;transition:all .2s;display:flex;align-items:center;gap:6px}
+.nav-item:hover{color:var(--neon);border-color:var(--border);background:var(--neon-glow2)}
+.nav-item.active{color:var(--neon);border-color:var(--border2);background:var(--neon-glow)}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:16px}
+.live-pill{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--text3);padding:5px 12px;border:1px solid var(--border);border-radius:2px;background:var(--glass2)}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulsate 1.5s ease-in-out infinite}
+@keyframes pulsate{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+
+/* TICKER */
+.ticker-wrap{overflow:hidden;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:rgba(0,10,25,0.6);padding:8px 0;margin-bottom:24px}
+.ticker-track{display:flex;white-space:nowrap;animation:ticker 35s linear infinite}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ti{display:inline-flex;align-items:center;gap:8px;padding:0 24px;font-family:var(--mono);font-size:11px;border-right:1px solid var(--border)}
+.ti-sym{color:var(--text3);letter-spacing:1px}.ti-id{color:var(--neon)}
+.ti-sev.CRITICAL{color:var(--red)}.ti-sev.HIGH{color:var(--orange)}.ti-sev.MEDIUM{color:var(--yellow)}.ti-sev.LOW{color:var(--green)}
+
+main{flex:1;padding:32px 28px;max-width:1400px;margin:0 auto;width:100%}
+
+/* PAGE HEADER */
+.ph-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--neon);margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.ph-eyebrow::before{content:'';width:24px;height:1px;background:linear-gradient(90deg,transparent,var(--neon))}
+.ph-eyebrow::after{content:'';width:50px;height:1px;background:linear-gradient(90deg,var(--neon),transparent)}
+.ph-title{font-family:var(--display);font-size:clamp(28px,4vw,42px);font-weight:700;letter-spacing:3px;margin-bottom:6px;background:linear-gradient(135deg,#fff 0%,var(--neon) 55%,var(--electric) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ph-sub{font-size:13px;color:var(--text2);font-weight:300;margin-bottom:32px}
+
+/* STAT CARDS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+@media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:500px){.stats{grid-template-columns:1fr}}
+.sc{position:relative;overflow:hidden;background:var(--glass);border:1px solid var(--border);border-radius:8px;padding:20px;backdrop-filter:blur(16px);transition:border-color .3s,transform .3s,box-shadow .3s;animation:revUp .5s ease both}
+.sc:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 40px var(--neon-glow2),0 0 0 1px var(--border2)}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:1px}
+.sc::after{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:50%;filter:blur(30px);opacity:.25}
+.sc.b::before{background:linear-gradient(90deg,transparent,var(--neon),transparent)}.sc.b::after{background:var(--neon)}
+.sc.r::before{background:linear-gradient(90deg,transparent,var(--red),transparent)}.sc.r::after{background:var(--red)}
+.sc.o::before{background:linear-gradient(90deg,transparent,var(--orange),transparent)}.sc.o::after{background:var(--orange)}
+.sc.g::before{background:linear-gradient(90deg,transparent,var(--green),transparent)}.sc.g::after{background:var(--green)}
+.sc-lbl{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:10px}
+.sc-val{font-family:var(--display);font-size:38px;font-weight:700;line-height:1;margin-bottom:6px}
+.sc.b .sc-val{color:var(--neon);text-shadow:0 0 20px rgba(0,212,255,.4)}
+.sc.r .sc-val{color:var(--red);text-shadow:0 0 20px rgba(255,45,85,.4)}
+.sc.o .sc-val{color:var(--orange);text-shadow:0 0 20px rgba(255,107,0,.4)}
+.sc.g .sc-val{color:var(--green);text-shadow:0 0 20px rgba(0,255,136,.4)}
+.sc-sub{font-family:var(--mono);font-size:10px;color:var(--text3)}
+
+/* GRID */
+.cgrid{display:grid;grid-template-columns:1fr 340px;gap:16px;margin-bottom:16px}
+@media(max-width:1100px){.cgrid{grid-template-columns:1fr}}
+
+/* PANEL */
+.panel{background:var(--glass);border:1px solid var(--border);border-radius:8px;backdrop-filter:blur(16px);overflow:hidden;animation:revUp .5s ease both}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);background:rgba(0,20,50,.3)}
+.panel-title{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text2);display:flex;align-items:center;gap:8px}
+.ptdot{width:5px;height:5px;border-radius:50%;background:var(--neon);box-shadow:0 0 8px var(--neon)}
+.ptdot.red{background:var(--red);box-shadow:0 0 8px var(--red)}
+
+/* CVE ITEMS */
+.cve-item{display:flex;gap:14px;padding:14px 20px;border-bottom:1px solid rgba(0,212,255,.05);cursor:pointer;transition:background .15s;animation:revUp .4s ease both}
+.cve-item:last-child{border-bottom:none}
+.cve-item:hover{background:rgba(0,212,255,.03)}
+.cve-bar{width:2px;border-radius:1px;flex-shrink:0;align-self:stretch;min-height:40px}
+.sev-CRITICAL .cve-bar{background:var(--red);box-shadow:0 0 8px var(--red)}
+.sev-HIGH .cve-bar{background:var(--orange);box-shadow:0 0 8px var(--orange)}
+.sev-MEDIUM .cve-bar{background:var(--yellow);box-shadow:0 0 5px var(--yellow)}
+.sev-LOW .cve-bar{background:var(--green);box-shadow:0 0 5px var(--green)}
+.sev-NONE .cve-bar{background:var(--text3)}
+.cve-body{flex:1;min-width:0}
+.cve-row1{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap}
+.cid{font-family:var(--mono);font-size:12px;color:var(--neon);text-decoration:none;letter-spacing:.5px}
+.cid:hover{text-shadow:0 0 10px var(--neon)}
+.chip{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border-radius:2px}
+.chip-CRITICAL{background:rgba(255,45,85,.15);color:var(--red);border:1px solid rgba(255,45,85,.3)}
+.chip-HIGH{background:rgba(255,107,0,.15);color:var(--orange);border:1px solid rgba(255,107,0,.3)}
+.chip-MEDIUM{background:rgba(255,214,10,.12);color:var(--yellow);border:1px solid rgba(255,214,10,.25)}
+.chip-LOW{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.2)}
+.chip-NONE{background:rgba(60,100,130,.15);color:var(--text3);border:1px solid var(--border)}
+.cscore{font-family:var(--mono);font-size:11px;font-weight:600;margin-left:auto;flex-shrink:0}
+.cdesc{font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:4px}
+.cdate{font-family:var(--mono);font-size:10px;color:var(--text3)}
+
+/* SEV BARS */
+.sev-bar-row{display:flex;align-items:center;gap:10px;padding:9px 20px;border-bottom:1px solid rgba(0,212,255,.05)}
+.sev-bar-row:last-child{border-bottom:none}
+.sb-lbl{font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;width:58px;flex-shrink:0}
+.sb-track{flex:1;height:5px;background:rgba(0,212,255,.07);border-radius:3px;overflow:hidden}
+.sb-fill{height:100%;border-radius:3px;transition:width 1s cubic-bezier(.4,0,.2,1)}
+.sb-CRITICAL{background:linear-gradient(90deg,#ff2d55,#ff6b6b);box-shadow:0 0 6px rgba(255,45,85,.6)}
+.sb-HIGH{background:linear-gradient(90deg,#ff6b00,#ffaa00);box-shadow:0 0 6px rgba(255,107,0,.5)}
+.sb-MEDIUM{background:linear-gradient(90deg,#ffd60a,#ffe566);box-shadow:0 0 5px rgba(255,214,10,.4)}
+.sb-LOW{background:linear-gradient(90deg,#00ff88,#00ffcc);box-shadow:0 0 5px rgba(0,255,136,.4)}
+.sb-NONE{background:var(--text3)}
+.sb-count{font-family:var(--mono);font-size:11px;color:var(--text2);width:28px;text-align:right}
+
+/* KEV TABLE */
+.kev-tbl{width:100%;border-collapse:collapse}
+.kev-tbl th{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
+.kev-tbl td{padding:11px 12px;border-bottom:1px solid rgba(0,212,255,.04);font-size:12px;vertical-align:middle}
+.kev-tbl tr:hover td{background:rgba(0,212,255,.025)}
+.kev-tbl tr:last-child td{border-bottom:none}
+.vtag{font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:2px;background:rgba(0,212,255,.07);border:1px solid var(--border);color:var(--text3);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap}
+.kbadge{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:2px;background:rgba(255,45,85,.12);border:1px solid rgba(255,45,85,.25);color:var(--red);letter-spacing:.5px;text-transform:uppercase}
+.due{font-family:var(--mono);font-size:11px;color:var(--red)}
+
+/* LINK BTN */
+.lbtn{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:6px 14px;border:1px solid var(--border2);border-radius:3px;background:transparent;color:var(--neon);cursor:pointer;text-decoration:none;transition:all .2s;display:inline-flex;align-items:center;gap:5px}
+.lbtn:hover{background:var(--neon-glow);box-shadow:0 0 20px var(--neon-glow)}
+
+/* LOADING / ERROR */
+.loading-box{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;gap:14px;color:var(--text3);font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase}
+.loader{width:26px;height:26px;border:1px solid var(--border2);border-top-color:var(--neon);border-radius:50%;animation:spin .7s linear infinite;box-shadow:0 0 15px var(--neon-glow)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err{padding:16px 20px;border:1px solid rgba(255,45,85,.2);border-radius:4px;background:rgba(255,45,85,.06);color:var(--red);font-family:var(--mono);font-size:11px;text-align:center;line-height:1.6;margin:16px}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:14px 28px;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.5px;flex-wrap:wrap;gap:6px;background:rgba(2,5,16,.6);backdrop-filter:blur(10px)}
+
+/* ANIMATIONS */
+@keyframes revUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.tscroll{overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="bg-layer">
+  <div class="bg-grid"></div>
+  <div class="bg-radial"></div>
+  <div class="bg-scan"></div>
+  <div id="particles"></div>
+</div>
+
+<div class="app">
+<nav>
+  <a class="nav-logo" href="index.html">SECURE<span>X</span></a>
+  <div class="nav-items">
+    <a class="nav-item active" href="index.html">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard
+    </a>
+    <a class="nav-item" href="cve.html">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>CVE Explorer
+    </a>
+    <a class="nav-item" href="about.html">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>About
+    </a>
+  </div>
+  <div class="nav-right">
+    <div class="live-pill"><div class="pulse"></div><span id="ntm">LIVE</span></div>
+  </div>
+</nav>
+
+<div class="ticker-wrap"><div class="ticker-track" id="ticker"><span class="ti"><span class="ti-sym">NVD</span><span class="ti-id">LOADING FEED…</span></span></div></div>
+
+<main>
+  <div class="ph-eyebrow">Threat Intelligence · Real-Time</div>
+  <h1 class="ph-title">SECURITY DASHBOARD</h1>
+  <p class="ph-sub">Live vulnerability data · NIST NVD &amp; CISA Known Exploited Vulnerabilities</p>
+
+  <div class="stats">
+    <div class="sc b" style="animation-delay:.0s"><div class="sc-lbl">CVE This Week</div><div class="sc-val" id="s-week">—</div><div class="sc-sub" id="s-wsub">Loading…</div></div>
+    <div class="sc r" style="animation-delay:.07s"><div class="sc-lbl">Critical (CVSS ≥9)</div><div class="sc-val" id="s-crit">—</div><div class="sc-sub">Last 7 days</div></div>
+    <div class="sc o" style="animation-delay:.14s"><div class="sc-lbl">CISA KEV Total</div><div class="sc-val" id="s-kev">—</div><div class="sc-sub">Actively exploited</div></div>
+    <div class="sc g" style="animation-delay:.21s"><div class="sc-lbl">KEV This Month</div><div class="sc-val" id="s-kevm">—</div><div class="sc-sub" id="s-kevml">Loading…</div></div>
+  </div>
+
+  <div class="cgrid">
+    <div class="panel" style="animation-delay:.1s">
+      <div class="panel-head">
+        <span class="panel-title"><span class="ptdot"></span>Recent CVEs — Last 7 Days</span>
+        <a class="lbtn" href="cve.html">Explorer →</a>
+      </div>
+      <div id="rcves"><div class="loading-box"><div class="loader"></div>Fetching NVD…</div></div>
+    </div>
+    <div class="panel" style="animation-delay:.15s">
+      <div class="panel-head"><span class="panel-title"><span class="ptdot"></span>Severity Breakdown</span><span style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1px">7D</span></div>
+      <div id="sevchart"><div class="loading-box" style="padding:20px"><div class="loader"></div></div></div>
+    </div>
+  </div>
+
+  <div class="panel" style="animation-delay:.2s;margin-bottom:16px">
+    <div class="panel-head">
+      <span class="panel-title"><span class="ptdot red"></span>CISA Known Exploited Vulnerabilities — Latest<span class="kbadge" style="margin-left:8px">ACTIVELY EXPLOITED</span></span>
+    </div>
+    <div class="tscroll"><div id="kevtbl"><div class="loading-box"><div class="loader"></div>Fetching CISA KEV…</div></div></div>
+  </div>
+</main>
+
+<footer>
+  <span style="color:var(--neon);opacity:.7">SECUREX</span>
+  <span>Jacopo Coniglio · Security Engineer · Politecnico di Torino</span>
+  <span id="ftm">—</span>
+</footer>
+</div>
+
+<script>
+const NVD='https://services.nvd.nist.gov/rest/json/cves/2.0';
+const CISA='https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json';
+
+function fmtDate(s){if(!s)return'—';return new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}
+function getCVSS(c){const m=c.metrics;if(!m)return null;if(m.cvssMetricV31?.length)return m.cvssMetricV31[0].cvssData.baseScore;if(m.cvssMetricV30?.length)return m.cvssMetricV30[0].cvssData.baseScore;if(m.cvssMetricV2?.length)return m.cvssMetricV2[0].cvssData.baseScore;return null}
+function toSev(s){if(s==null)return'NONE';if(s>=9)return'CRITICAL';if(s>=7)return'HIGH';if(s>=4)return'MEDIUM';if(s>0)return'LOW';return'NONE'}
+function sevCol(s){return{CRITICAL:'var(--red)',HIGH:'var(--orange)',MEDIUM:'var(--yellow)',LOW:'var(--green)',NONE:'var(--text3)'}[s]||'var(--text3)'}
+function getDesc(c){return c.descriptions?.find(x=>x.lang==='en')?.value||'No description.'}
+function trunc(s,n=115){return s&&s.length>n?s.slice(0,n)+'…':s||'—'}
+
+// Particles
+(function(){
+  const c=document.getElementById('particles');
+  for(let i=0;i<25;i++){
+    const p=document.createElement('div');
+    p.className='particle';
+    p.style.cssText=`left:${Math.random()*100}%;--dur:${6+Math.random()*12}s;--delay:${Math.random()*10}s;--drift:${(Math.random()-.5)*80}px`;
+    c.appendChild(p);
+  }
+})();
+
+// Clock
+function clock(){
+  const t=new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('ntm').textContent='LIVE · '+t;
+  document.getElementById('ftm').textContent='Last sync: '+t;
+}
+clock();setInterval(clock,1000);
+
+async function loadNVD(){
+  try{
+    const end=new Date(),start=new Date();start.setDate(start.getDate()-7);
+    const f=d=>d.toISOString().replace(/\.\d+Z$/,'.000 UTC+00:00');
+    const res=await fetch(`${NVD}?pubStartDate=${encodeURIComponent(f(start))}&pubEndDate=${encodeURIComponent(f(end))}&resultsPerPage=40`);
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    const cves=(data.vulnerabilities||[]).map(v=>v.cve);
+    document.getElementById('s-week').textContent=data.totalResults??cves.length;
+    document.getElementById('s-wsub').textContent=`${start.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})} – ${end.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})}`;
+    const counts={CRITICAL:0,HIGH:0,MEDIUM:0,LOW:0,NONE:0};
+    cves.forEach(c=>{counts[toSev(getCVSS(c))]++});
+    document.getElementById('s-crit').textContent=counts.CRITICAL;
+    document.getElementById('sevchart').innerHTML=Object.entries(counts).map(([s,n])=>`<div class="sev-bar-row"><span class="sb-lbl" style="color:${sevCol(s)}">${s}</span><div class="sb-track"><div class="sb-fill sb-${s}" style="width:${(n/(cves.length||1)*100).toFixed(1)}%"></div></div><span class="sb-count">${n}</span></div>`).join('');
+    document.getElementById('rcves').innerHTML=cves.slice(0,12).map((c,i)=>{
+      const score=getCVSS(c);const sev=toSev(score);
+      return`<div class="cve-item sev-${sev}" style="animation-delay:${i*.04}s"><div class="cve-bar"></div><div class="cve-body"><div class="cve-row1"><a class="cid" href="cve.html?id=${c.id}">${c.id}</a><span class="chip chip-${sev}">${sev}</span><span class="cscore" style="color:${sevCol(sev)}">${score??'—'}</span></div><div class="cdesc">${trunc(getDesc(c))}</div><div class="cdate">${fmtDate(c.published)}</div></div></div>`;
+    }).join('');
+    const items=cves.slice(0,16).map(c=>{const sev=toSev(getCVSS(c));return`<span class="ti"><span class="ti-sym">CVE</span><span class="ti-id">${c.id}</span><span class="ti-sev ${sev}">${sev}</span></span>`}).join('');
+    document.getElementById('ticker').innerHTML=items+items;
+  }catch(e){
+    document.getElementById('rcves').innerHTML=`<div class="err">⚠ NVD API unavailable — Rate limited, retry in ~30s<br><small style="opacity:.6">${e.message}</small></div>`;
+    document.getElementById('sevchart').innerHTML=`<div class="err">—</div>`;
+    document.getElementById('s-week').textContent='N/A';document.getElementById('s-crit').textContent='N/A';
+  }
+}
+
+async function loadCISA(){
+  try{
+    const res=await fetch(CISA);if(!res.ok)throw new Error('HTTP '+res.status);
+    const data=await res.json();const vulns=data.vulnerabilities||[];
+    document.getElementById('s-kev').textContent=vulns.length;
+    const now=new Date();
+    const mo=vulns.filter(v=>{const d=new Date(v.dateAdded);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear()});
+    document.getElementById('s-kevm').textContent=mo.length;
+    document.getElementById('s-kevml').textContent=now.toLocaleString('en-US',{month:'long',year:'numeric'});
+    const latest=[...vulns].sort((a,b)=>new Date(b.dateAdded)-new Date(a.dateAdded)).slice(0,15);
+    document.getElementById('kevtbl').innerHTML=`<table class="kev-tbl"><thead><tr><th>CVE ID</th><th>Vendor</th><th>Product</th><th>Vulnerability</th><th>Due Date</th><th>Added</th></tr></thead><tbody>${latest.map(v=>`<tr><td><a class="cid" href="cve.html?id=${v.cveID}">${v.cveID}</a></td><td><span class="vtag">${v.vendorProject||'—'}</span></td><td style="color:var(--text2)">${v.product||'—'}</td><td style="color:var(--text2);max-width:240px">${trunc(v.vulnerabilityName,55)}</td><td><span class="due">${fmtDate(v.dueDate)}</span></td><td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${fmtDate(v.dateAdded)}</td></tr>`).join('')}</tbody></table>`;
+  }catch(e){
+    document.getElementById('kevtbl').innerHTML=`<div class="err">⚠ CISA API unavailable<br><small style="opacity:.6">${e.message}</small></div>`;
+    document.getElementById('s-kev').textContent='N/A';document.getElementById('s-kevm').textContent='N/A';
+  }
+}
+
+Promise.all([loadNVD(),loadCISA()]);
+setInterval(()=>Promise.all([loadNVD(),loadCISA()]),60000);
+</script>
+</body>
+</html>
