@@ -280,7 +280,7 @@ function trunc(s,n=120){return s&&s.length>n?s.slice(0,n)+'…':s||'—'}
 function clock(){const t=new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit',second:'2-digit'});document.getElementById('ntm').textContent='LIVE · '+t;document.getElementById('ftm').textContent='Last sync: '+t}
 clock();setInterval(clock,1000);
 
-async function loadKEV(){try{const r=await fetch(CISA);const d=await r.json();(d.vulnerabilities||[]).forEach(v=>kevSet.add(v.cveID))}catch{}}
+async function loadKEV(){try{const urls=[CISA,'https://corsproxy.io/?'+encodeURIComponent(CISA)];let r;for(const u of urls){try{r=await fetch(u);if(r.ok)break}catch{}}if(r&&r.ok){const d=await r.json();(d.vulnerabilities||[]).forEach(v=>kevSet.add(v.cveID))}}catch{}}
 
 async function doSearch(){
   const q=document.getElementById('sinput').value.trim();
@@ -291,11 +291,11 @@ async function doSearch(){
   document.getElementById('rcount').textContent='—';
   try{
     const end=new Date(),start=new Date();start.setDate(start.getDate()-days);
-    const f=d=>d.toISOString().replace(/\.\d+Z$/,'.000 UTC+00:00');
+    const f=d=>d.toISOString().slice(0,19);
     let url;
     if(/^CVE-\d{4}-\d+$/i.test(q))url=`${NVD}?cveId=${q.toUpperCase()}`;
-    else if(q)url=`${NVD}?keywordSearch=${encodeURIComponent(q)}&pubStartDate=${encodeURIComponent(f(start))}&pubEndDate=${encodeURIComponent(f(end))}&resultsPerPage=100`;
-    else url=`${NVD}?pubStartDate=${encodeURIComponent(f(start))}&pubEndDate=${encodeURIComponent(f(end))}&resultsPerPage=100`;
+    else if(q)url=`${NVD}?keywordSearch=${encodeURIComponent(q)}&pubStartDate=${f(start)}&pubEndDate=${f(end)}&resultsPerPage=100`;
+    else url=`${NVD}?pubStartDate=${f(start)}&pubEndDate=${f(end)}&resultsPerPage=100`;
     const res=await fetch(url);
     if(!res.ok)throw new Error('HTTP '+res.status);
     const data=await res.json();
