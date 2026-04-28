@@ -262,8 +262,8 @@ clock();setInterval(clock,1000);
 async function loadNVD(){
   try{
     const end=new Date(),start=new Date();start.setDate(start.getDate()-7);
-    const f=d=>d.toISOString().replace(/\.\d+Z$/,'.000 UTC+00:00');
-    const res=await fetch(`${NVD}?pubStartDate=${encodeURIComponent(f(start))}&pubEndDate=${encodeURIComponent(f(end))}&resultsPerPage=40`);
+    const f=d=>d.toISOString().slice(0,19);
+    const res=await fetch(`${NVD}?pubStartDate=${f(start)}&pubEndDate=${f(end)}&resultsPerPage=40`);
     if(!res.ok)throw new Error('HTTP '+res.status);
     const data=await res.json();
     const cves=(data.vulnerabilities||[]).map(v=>v.cve);
@@ -288,7 +288,9 @@ async function loadNVD(){
 
 async function loadCISA(){
   try{
-    const res=await fetch(CISA);if(!res.ok)throw new Error('HTTP '+res.status);
+    const urls=[CISA,`https://corsproxy.io/?${encodeURIComponent(CISA)}`];
+    let res;for(const u of urls){try{res=await fetch(u);if(res.ok)break}catch{}}
+    if(!res||!res.ok)throw new Error('All endpoints failed');
     const data=await res.json();const vulns=data.vulnerabilities||[];
     document.getElementById('s-kev').textContent=vulns.length;
     const now=new Date();
